@@ -1,4 +1,4 @@
-name: CI Pipeline
+name: CI with Cache
 
 on:
   push:
@@ -13,25 +13,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      # Bước 1: Checkout code từ repository
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Set up Node.js
-        uses: actions/setup-node@v3
-        with:
-          node-version: 18
-
-      - name: Cache node_modules
-        id: node-modules-cache
+      # Bước 2: Thiết lập bộ nhớ đệm
+      - name: Cache dependencies
+        id: cache-deps
         uses: actions/cache@v3
         with:
-          path: node_modules
-          key: node-modules-${{ runner.os }}-${{ hashFiles('package-lock.json') }}
+          path: |
+            node_modules
+            vendor/bundle
+          key: ${{ runner.os }}-deps-${{ hashFiles('**/package-lock.json', '**/Gemfile.lock') }}
           restore-keys: |
-            node-modules-${{ runner.os }}-
+            ${{ runner.os }}-deps-
 
-      - name: Install dependencies
+      # Bước 3: Cài đặt dependencies (ví dụ cho Node.js)
+      - name: Install Node.js dependencies
+        if: steps.cache-deps.outputs.cache-hit != 'true'
         run: npm install
 
+      # Bước 4: Chạy tests (ví dụ)
       - name: Run tests
         run: npm test
